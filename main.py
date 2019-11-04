@@ -113,6 +113,9 @@ if __name__ == "__main__":
     identMachine.add_state("ID", None, end_state=1)
     identMachine.set_start("ident_State")
 
+    if (debug == True):
+        print('{0:<15} {1:<15} {2:<20}'.format("Stack","Input","Action"))
+
     with open("input.txt", "r") as inputFile:
         for line in inputFile:
             #If line is empty pass
@@ -125,6 +128,7 @@ if __name__ == "__main__":
             else:
                 #Push $ onto the stack
                 SyntaxStack.append("$")
+                #SyntaxStack.append(";") #Push ; into stack to declare end of syntactically correct statement
                 #Put end-of-file marker ($) at the end of the input string
                 line = line + " $"
                 #Push (Starting Symbol) on to the stack
@@ -151,9 +155,10 @@ if __name__ == "__main__":
                     if any(item == terminal for item in terminal_list):
                         if (terminal == incomingToken):
                             debugList[2] += "pop(" + SyntaxStack.pop() + ")"
-                            debugList[2] += ", lexur() popped (" + LexemeDeque.popleft() + ")"
+                            debugList[2] += ", lexur() popped " + LexemeDeque.popleft()
                         else:
                             print("ERROR! Terminal did not match expected terminal")
+                            break
                     else:
                         #if Table[t,i] has entry then
                         if (str(table_df.loc[terminal, incomingToken]) != "nan"):
@@ -174,10 +179,11 @@ if __name__ == "__main__":
                             debugList[2] += ")"
                         else:
                             print("ERROR! TOS Symbol and incoming token not found in table")
+                            break
 
 
                     if (debug == True):
-                        print('{0:<15} {1:<15} {2:<20}'.format(debugList[0],debugList[1],debugList[2]))
+                        print('{0:<20} {1:<15} {2:<20}'.format(debugList[0],debugList[1],debugList[2]))
 
                 #Reset Deque
                 LexemeDeque.clear()
