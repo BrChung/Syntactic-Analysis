@@ -12,7 +12,7 @@ from identifier_transistions import ident_FirstStateTransistions, ident_StartTra
 debug = True
 
 #Pandas
-table_df = pd.read_csv("Table-Predictive-Parser.csv")
+table_df = pd.read_csv("Table-Predictive-Parser.csv", delimiter=",", encoding="utf-8-sig")
 table_df.set_index("TOS", inplace = True)
 terminal_list = table_df.columns.values
 
@@ -23,11 +23,11 @@ SyntaxStack = deque()
 LexemeDeque = deque()
 
 keyword_list = ["int", "float", "bool", "if", "else", "then", "endif", "while", "whileend", "do", "doend", "for", "forend", "input", "output", "and", "or", "function"]
-operator_list = ["=", "+", "-", "*", "/", "%","<", ">", "<=", ">=", "==", "++", "--"]
+operator_list = ["=", "+", "-", "*", "/", "%","<", ">", "<=", ">=", "==", "!=", "++", "--"]
 seperator_list = [";", ":", ",", "(", ")", "{", "}", "[", "]","'",".","$"]
 
 #The split operators function deals with any cases such as "a+b-c" and splits it into "a + b - c" for the other functions to recieve correct format
-def splitOperators(inputLine):
+def insertSpace(inputLine):
     #Add whitespace char at end of string in case last element in a operator
     leftToParseString = inputLine + ' '     #String that has not yet parsed
     parsedString = ''                       #String that is already parsed
@@ -63,11 +63,11 @@ def lexur(lexeme):
 
     #Check if keyword:
     if any(item == lexeme for item in keyword_list):
-        return(lexeme, "KEY")
+        return(lexeme, "KEYWORD")
 
     else:
         #split along list of operator/seperator and run function with the new list of strings
-        lexeme = splitOperators(lexeme)
+        lexeme = insertSpace(lexeme)
         for splitLex in lexeme.split():
             #Check if operator:
             if any(item == splitLex for item in operator_list):
@@ -134,10 +134,14 @@ if __name__ == "__main__":
                 #Push (Starting Symbol) on to the stack
                 SyntaxStack.append("E")
 
-                for lexeme in line.split():
+                lexeme = insertSpace(line)
+                lexeme.strip()
+                multipleLex = lexeme.split()
+
+                for lexeme in multipleLex:
                     tempList = lexur(lexeme)
                     #If token is operator/seperator, keep op/sep as the token
-                    if (tempList[1] == "OPERATOR" or tempList[1] == "SEPERATOR"):
+                    if (tempList[1] == "OPERATOR" or tempList[1] == "SEPERATOR" or tempList[1] == "KEYWORD"):
                         LexemeDeque.append(tempList[0])
                     else:
                         LexemeDeque.append(tempList[1])
@@ -192,3 +196,4 @@ if __name__ == "__main__":
 
 
 
+#Error handling
