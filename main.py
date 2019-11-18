@@ -115,7 +115,7 @@ if __name__ == "__main__":
 
     if (debug == True):
         print('{0:<15} {1:<15} {2:<20}'.format("Stack","Input","Action"))
-
+    holder = ""
     with open("input.txt", "r") as inputFile:
         for line in inputFile:
             #If line is empty pass
@@ -126,71 +126,72 @@ if __name__ == "__main__":
                 pass
             #Else run syntactic analysis
             else:
+                holder += line
                 #Push $ onto the stack
-                SyntaxStack.append("$")
-                #SyntaxStack.append(";") #Push ; into stack to declare end of syntactically correct statement
+        SyntaxStack.append("$")
+        #SyntaxStack.append(";") #Push ; into stack to declare end of syntactically correct statement
                 #Put end-of-file marker ($) at the end of the input string
-                line = line + " $"
+        holder = holder + " $"
                 #Push (Starting Symbol) on to the stack
-                SyntaxStack.append("E")
+        SyntaxStack.append("E")
 
-                lexeme = insertSpace(line)
-                lexeme.strip()
-                multipleLex = lexeme.split()
+        lexeme = insertSpace(holder)
+        lexeme.strip()
+        multipleLex = lexeme.split()
 
-                for lexeme in multipleLex:
-                    tempList = lexur(lexeme)
-                    #If token is operator/seperator, keep op/sep as the token
-                    if (tempList[1] == "OPERATOR" or tempList[1] == "SEPERATOR" or tempList[1] == "KEYWORD"):
-                        LexemeDeque.append(tempList[0])
-                    else:
-                        LexemeDeque.append(tempList[1])
+        for lexeme in multipleLex:
+            tempList = lexur(lexeme)
+            #If token is operator/seperator, keep op/sep as the token
+            if (tempList[1] == "OPERATOR" or tempList[1] == "SEPERATOR" or tempList[1] == "KEYWORD"):
+                LexemeDeque.append(tempList[0])
+            else:
+                LexemeDeque.append(tempList[1])
                      
-                #While stack not empty do
-                while (len(SyntaxStack) > 0):
-                    #Debug Station:
-                    debugList = ["","",""]
-                    debugList[0] = "".join(SyntaxStack)
-                    debugList[1] = "".join(LexemeDeque)
+            #While stack not empty do
+        while (len(SyntaxStack) > 0):
+            #Debug Station:
+            debugList = ["","",""]
+            debugList[0] = "".join(SyntaxStack)
+            debugList[1] = "".join(LexemeDeque)
 
-                    #let terminal = TOS symbol and i=incoming token
-                    terminal = SyntaxStack[-1] #Peek last element in deque or top of stack
-                    incomingToken = LexemeDeque[0] #Peek first element in deque or front of queue
-                    if any(item == terminal for item in terminal_list):
-                        if (terminal == incomingToken):
-                            debugList[2] += "pop(" + SyntaxStack.pop() + ")"
-                            debugList[2] += ", lexur() popped " + LexemeDeque.popleft()
-                        else:
-                            print("ERROR! Terminal did not match expected terminal")
-                            break
-                    else:
-                        #if Table[t,i] has entry then
-                        if (str(table_df.loc[terminal, incomingToken]) != "nan"):
-                            debugList[2] += "pop(" + SyntaxStack.pop() + ")"
+            #let terminal = TOS symbol and i=incoming token
+            terminal = SyntaxStack[-1] #Peek last element in deque or top of stack
+            incomingToken = LexemeDeque[0] #Peek first element in deque or front of queue
+            if any(item == terminal for item in terminal_list):
+                if (terminal == incomingToken):
+                    debugList[2] += "pop(" + SyntaxStack.pop() + ")"
+                    debugList[2] += ", lexur() popped " + LexemeDeque.popleft()
+                else:
+                    print("ERROR! Terminal did not match expected terminal")
+                    break
+            else:
+                #if Table[t,i] has entry then
+                if (str(table_df.loc[terminal, incomingToken]) != "nan"):
+                    debugList[2] += "pop(" + SyntaxStack.pop() + ")"
                             #push Table[t,i] in reverse order
-                            pushValues = list()
-                            lookUp = table_df.loc[terminal, incomingToken]
+                    pushValues = list()
+                    lookUp = table_df.loc[terminal, incomingToken]
                             #Split look up value by comma
-                            pushValues = lookUp.split(",")
+                    pushValues = lookUp.split(",")
                             #Reverse order of list of TOS
-                            pushValues.reverse()
-                            debugList[2] += ", push("
-                            for values in pushValues:
-                                debugList[2] += values
+                    pushValues.reverse()
+                    debugList[2] += ", push("
+                    for values in pushValues:
+                        debugList[2] += values
                                 #If Eplison, do not append into values
-                                if (str(table_df.loc[terminal, incomingToken]) != "ε"):
-                                    SyntaxStack.append(values)
-                            debugList[2] += ")"
-                        else:
-                            print("ERROR! TOS Symbol and incoming token not found in table")
-                            break
+                        if (str(table_df.loc[terminal, incomingToken]) != "ε"):
+                            SyntaxStack.append(values)
+                        debugList[2] += ")"
+                else:
+                    print("ERROR! TOS Symbol and incoming token not found in table")
+                    break
 
 
-                    if (debug == True):
-                        print('{0:<20} {1:<15} {2:<20}'.format(debugList[0],debugList[1],debugList[2]))
+            if (debug == True):
+                print('{0:<20} {1:<15} {2:<20}'.format(debugList[0],debugList[1],debugList[2]))
 
                 #Reset Deque
-                LexemeDeque.clear()
+        LexemeDeque.clear()
 
 
 
