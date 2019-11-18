@@ -22,7 +22,7 @@ if (debug == True):
 SyntaxStack = deque()
 LexemeDeque = deque()
 
-keyword_list = ["int", "float", "bool", "if", "else", "then", "endif", "while", "whileend", "do", "doend", "for", "forend", "input", "output", "and", "or", "function"]
+keyword_list = ["int", "float", "bool", "if", "else", "then", "endif", "while", "whileend", "do", "doend", "for", "forend", "input", "output", "and", "or", "function", "begin", "end"]
 operator_list = ["=", "+", "-", "*", "/", "%","<", ">", "<=", ">=", "==", "!=", "++", "--"]
 seperator_list = [";", ":", ",", "(", ")", "{", "}", "[", "]","'",".","$"]
 
@@ -90,6 +90,28 @@ def lexur(lexeme):
                     return(tempLexeme, "UNKNOWN")
 
 
+def syntaxError(errorID):
+    if(errorID == "E"):
+        return("Expression not found.")
+    elif(errorID == "E'"):
+        return("Expression not found.")
+    elif(errorID == "T"):
+        return("Term not found.")
+    elif(errorID == "T'"):
+        return("Term not found.")
+    elif(errorID == "F"):
+        return("Final state not found.")
+    elif(errorID == "F'"):
+        return("Final state not found.")
+    elif(errorID == "moreID"):
+        return("More ID's not found.")
+    elif(errorID == "conditional"):
+        return("Conditional not found.")
+    elif(errorID == "relOp"):
+        return("Relational operation not found.")
+    else:
+        return("Unknown error")
+
 #DRIVER FUNCTIONS AKA MAIN
 #Read input.txt to perform lexical analysis
 if __name__ == "__main__":
@@ -116,6 +138,7 @@ if __name__ == "__main__":
     if (debug == True):
         print('{0:<15} {1:<15} {2:<20}'.format("Stack","Input","Action"))
     holder = ""
+    syntacticallyCorrect = True
     with open("input.txt", "r") as inputFile:
         for line in inputFile:
             #If line is empty pass
@@ -127,12 +150,12 @@ if __name__ == "__main__":
             #Else run syntactic analysis
             else:
                 holder += line
-                #Push $ onto the stack
+        #Push $ onto the stack
         SyntaxStack.append("$")
         #SyntaxStack.append(";") #Push ; into stack to declare end of syntactically correct statement
-                #Put end-of-file marker ($) at the end of the input string
+        #Put end-of-file marker ($) at the end of the input string
         holder = holder + " $"
-                #Push (Starting Symbol) on to the stack
+        #Push (Starting Symbol) on to the stack
         SyntaxStack.append("E")
 
         lexeme = insertSpace(holder)
@@ -147,7 +170,7 @@ if __name__ == "__main__":
             else:
                 LexemeDeque.append(tempList[1])
                      
-            #While stack not empty do
+        #While stack not empty do
         while (len(SyntaxStack) > 0):
             #Debug Station:
             debugList = ["","",""]
@@ -162,28 +185,32 @@ if __name__ == "__main__":
                     debugList[2] += "pop(" + SyntaxStack.pop() + ")"
                     debugList[2] += ", lexur() popped " + LexemeDeque.popleft()
                 else:
+                    syntacticallyCorrect = False
                     print("ERROR! Terminal did not match expected terminal")
                     break
             else:
                 #if Table[t,i] has entry then
                 if (str(table_df.loc[terminal, incomingToken]) != "nan"):
                     debugList[2] += "pop(" + SyntaxStack.pop() + ")"
-                            #push Table[t,i] in reverse order
+                    #push Table[t,i] in reverse order
                     pushValues = list()
                     lookUp = table_df.loc[terminal, incomingToken]
-                            #Split look up value by comma
+                    #Split look up value by comma
                     pushValues = lookUp.split(",")
-                            #Reverse order of list of TOS
+                    #Reverse order of list of TOS
                     pushValues.reverse()
                     debugList[2] += ", push("
                     for values in pushValues:
                         debugList[2] += values
-                                #If Eplison, do not append into values
+                        #If Eplison, do not append into values
                         if (str(table_df.loc[terminal, incomingToken]) != "ε"):
                             SyntaxStack.append(values)
                         debugList[2] += ")"
                 else:
-                    print("ERROR! TOS Symbol and incoming token not found in table")
+                    syntacticallyCorrect = False
+                    print("Syntactically incorrect")
+                    print("ERROR! TOS Symbol and incoming token not found in table.")
+                    print(syntaxError(SyntaxStack.pop()))
                     break
 
 
@@ -192,6 +219,9 @@ if __name__ == "__main__":
 
                 #Reset Deque
         LexemeDeque.clear()
+
+        if(syntacticallyCorrect == True):
+            print("Good job! Code is Syntactically Correct! :)")
 
 
 
