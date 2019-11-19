@@ -1,6 +1,8 @@
-#Brian Chung
-#Lexur w/ Finite State Machine Working Iteration 1
-#9/21/2019
+'''-------------------------------------------------------------------------------------
+AUTHORS			:	Brian Chung & Michael Cingari & Owen Salcido
+LAST MODIFIED	:	11/18/2019
+FILE            :   'finitestatemachine.py'
+-------------------------------------------------------------------------------------'''
 
 class FiniteStateMachine:
     def __init__(self):

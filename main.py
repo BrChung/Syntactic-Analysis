@@ -1,27 +1,36 @@
-#Brian Chung
-#Syntactical Anaylsis
-#11/3/2019
+'''-------------------------------------------------------------------------------------
+AUTHORS			:	Brian Chung & Michael Cingari & Owen Salcido
+LAST MODIFIED	:	11/18/2019
+FILE            :   'main.py'
+-------------------------------------------------------------------------------------'''
 
-from collections import deque
 import pandas as pd
-
+from collections import deque
 from finitestatemachine import FiniteStateMachine
 from digit_transistions import digit_integerStateTransistions, digit_realStateTransistions, digit_StartTransistions
 from identifier_transistions import ident_FirstStateTransistions, ident_StartTransistions, ident_ValidIdentifierStateTransistions
+from syntax_analysis_helper import syntaxError, convertRule, printProductionRules
 
+#Set debug to true to view stack data in terminal
 debug = True
 
-#Pandas
+#Used pandas to read in csv table to perform LL Table parser
 table_df = pd.read_csv("Table-Predictive-Parser.csv", delimiter=",", encoding="utf-8-sig")
 table_df.set_index("TOS", inplace = True)
 terminal_list = table_df.columns.values
 
+#Print if debug is true
 if (debug == True):
+    print("DEBUG MODE ENABALED")
+    print("Read in CSV - LL Parsing Table:")
     print(table_df)
 
-SyntaxStack = deque()
-LexemeDeque = deque()
+#Initialize data structures
+SyntaxStack = deque() #Holds syntax/production rules (LL Stack)
+LexemeDeque = deque() #Holds lexeme or remaining input
+stackView = [] #Stack view is only used if debug is true
 
+#Create list of keywords, operators, and seperators
 keyword_list = ["int", "float", "bool", "if", "else", "then", "endif", "while", "whileend", "do", "doend", "for", "forend", "input", "output", "and", "or", "function", "begin", "end"]
 operator_list = ["=", "+", "-", "*", "/", "%","<", ">", "<=", ">=", "==", "!=", "++", "--"]
 seperator_list = [";", ":", ",", "(", ")", "{", "}", "[", "]","'",".","$"]
@@ -56,15 +65,13 @@ def insertSpace(inputLine):
         else:        
             parsedString = parsedString + leftToParseString[0]
             leftToParseString = leftToParseString[1:]
-
     return parsedString
 
-def lexur(lexeme):
 
+def lexur(lexeme):
     #Check if keyword:
     if any(item == lexeme for item in keyword_list):
         return(lexeme, "KEYWORD")
-
     else:
         #split along list of operator/seperator and run function with the new list of strings
         lexeme = insertSpace(lexeme)
@@ -72,11 +79,9 @@ def lexur(lexeme):
             #Check if operator:
             if any(item == splitLex for item in operator_list):
                 return(splitLex, "OPERATOR")
-
             #Check if seperator:
             elif any(item == splitLex for item in seperator_list):
-                return(splitLex, "SEPERATOR")
-                
+                return(splitLex, "SEPERATOR")     
             #Check for idenitifier/digit
             else:
                 tempLexeme = splitLex
@@ -88,29 +93,6 @@ def lexur(lexeme):
                     return(tempLexeme, identMachine.run(splitLex))
                 else:
                     return(tempLexeme, "UNKNOWN")
-
-
-def syntaxError(errorID):
-    if(errorID == "E"):
-        return("Expression not found.")
-    elif(errorID == "E'"):
-        return("Expression not found.")
-    elif(errorID == "T"):
-        return("Term not found.")
-    elif(errorID == "T'"):
-        return("Term not found.")
-    elif(errorID == "F"):
-        return("Final state not found.")
-    elif(errorID == "F'"):
-        return("Final state not found.")
-    elif(errorID == "moreID"):
-        return("More ID's not found.")
-    elif(errorID == "conditional"):
-        return("Conditional not found.")
-    elif(errorID == "relOp"):
-        return("Relational operation not found.")
-    else:
-        return("Unknown error")
 
 #DRIVER FUNCTIONS AKA MAIN
 #Read input.txt to perform lexical analysis
@@ -135,10 +117,15 @@ if __name__ == "__main__":
     identMachine.add_state("ID", None, end_state=1)
     identMachine.set_start("ident_State")
 
+    #If debug is true append table headers to the stack view
     if (debug == True):
-        print('{0:<15} {1:<15} {2:<20}'.format("Stack","Input","Action"))
-    holder = ""
+        stackView.append('{0:<30} {1:<30} {2:<30}'.format("Stack","Input","Action"))
+
+
+    codeHolder = ""
     syntacticallyCorrect = True
+    printToken = True
+
     with open("input.txt", "r") as inputFile:
         for line in inputFile:
             #If line is empty pass
@@ -149,19 +136,15 @@ if __name__ == "__main__":
                 pass
             #Else run syntactic analysis
             else:
-                holder += line
-        #Push $ onto the stack
-        SyntaxStack.append("$")
-        #SyntaxStack.append(";") #Push ; into stack to declare end of syntactically correct statement
-        #Put end-of-file marker ($) at the end of the input string
-        holder = holder + " $"
-        #Push (Starting Symbol) on to the stack
-        SyntaxStack.append("E")
+                codeHolder += line
+        SyntaxStack.append("$")         #Push $ onto the stack
+        codeHolder = codeHolder + " $"  #Put end-of-file marker ($) at the end of the input string
+        SyntaxStack.append("S")         #Push (Starting Symbol) on to the stack
+        lexeme = insertSpace(codeHolder)#Insert space in lexeme where appropriate
+        lexeme.strip()                  #Strip extraneous spaces
+        multipleLex = lexeme.split()    #Split lexeme into multiple lexeme
 
-        lexeme = insertSpace(holder)
-        lexeme.strip()
-        multipleLex = lexeme.split()
-
+        #For every lexeme in multipleLex assign lexeme list with either the actual token or lexeme
         for lexeme in multipleLex:
             tempList = lexur(lexeme)
             #If token is operator/seperator, keep op/sep as the token
@@ -170,6 +153,9 @@ if __name__ == "__main__":
             else:
                 LexemeDeque.append(tempList[1])
                      
+        #Create/open output.txt to output production rules
+        outPutFile = open("output.txt", "w")
+
         #While stack not empty do
         while (len(SyntaxStack) > 0):
             #Debug Station:
@@ -180,51 +166,62 @@ if __name__ == "__main__":
             #let terminal = TOS symbol and i=incoming token
             terminal = SyntaxStack[-1] #Peek last element in deque or top of stack
             incomingToken = LexemeDeque[0] #Peek first element in deque or front of queue
+
+            #Print incoming token if print token bool is true
+            if(printToken):
+                outPutFile.write("Incoming Token: " + incomingToken + "\n")
+                printToken = False
+
             if any(item == terminal for item in terminal_list):
                 if (terminal == incomingToken):
                     debugList[2] += "pop(" + SyntaxStack.pop() + ")"
                     debugList[2] += ", lexur() popped " + LexemeDeque.popleft()
+                    printToken = True   #Print token to true so next iteration, token will print
+
                 else:
                     syntacticallyCorrect = False
-                    print("ERROR! Terminal did not match expected terminal")
-                    break
+                    outPutFile.write("ERROR! Terminal did not match expected terminal" + "\n")
+                    outPutFile.write("  Recieved: " + LexemeDeque.popleft() + "  Expected: " + SyntaxStack.pop() + "\n")
+                    break   #Do not continue to compile
             else:
                 #if Table[t,i] has entry then
                 if (str(table_df.loc[terminal, incomingToken]) != "nan"):
-                    debugList[2] += "pop(" + SyntaxStack.pop() + ")"
-                    #push Table[t,i] in reverse order
-                    pushValues = list()
+                    poppedValue = SyntaxStack.pop()
+                    debugList[2] += "pop(" + poppedValue + ")" #Output to debug
+                    pushValues = list() #push Table[t,i] in reverse order
                     lookUp = table_df.loc[terminal, incomingToken]
-                    #Split look up value by comma
-                    pushValues = lookUp.split(",")
-                    #Reverse order of list of TOS
-                    pushValues.reverse()
-                    debugList[2] += ", push("
+                    pushValues = lookUp.split() #Split look up value by whitespace
+                    outPutFile.write(printProductionRules(poppedValue, pushValues) + "\n") #Print Production Rules
+                    pushValues.reverse() #Reverse order of list of TOS
+                    debugList[2] += ", push(" #Output to debug
                     for values in pushValues:
                         debugList[2] += values
                         #If Eplison, do not append into values
                         if (str(table_df.loc[terminal, incomingToken]) != "ε"):
                             SyntaxStack.append(values)
-                        debugList[2] += ")"
+                        debugList[2] += ")" #Output to debug
                 else:
                     syntacticallyCorrect = False
-                    print("Syntactically incorrect")
-                    print("ERROR! TOS Symbol and incoming token not found in table.")
-                    print(syntaxError(SyntaxStack.pop()))
-                    break
-
+                    outPutFile.write("Syntactically incorrect" + "\n")
+                    outPutFile.write("ERROR! Parsing Table Defaulted." + "\n")
+                    outPutFile.write(syntaxError(SyntaxStack.pop(), LexemeDeque.popleft()) + "\n")
+                    break   #Do not continue to compile
 
             if (debug == True):
-                print('{0:<20} {1:<15} {2:<20}'.format(debugList[0],debugList[1],debugList[2]))
+                stackView.append('{0:30} {1:<30} {2:<30}'.format(debugList[0],debugList[1],debugList[2]))
 
-                #Reset Deque
+        #Reset Deque
         LexemeDeque.clear()
 
+        #If debug is true print stack view in terminal
+        if(debug == True):
+            for line in stackView:
+                print(line)
+
+        #If the input is syntactically correct output:
         if(syntacticallyCorrect == True):
-            print("Good job! Code is Syntactically Correct! :)")
+            print("Accepted! Stack is empty with no input remaining.")
+            print("Please view output.txt to view all production rules used!")
+            outPutFile.write("Accepted! Code is Syntactically Correct!")
 
-
-
-
-
-#Error handling
+        outPutFile.close()

@@ -1,5 +1,8 @@
-#Brian Chung
-#9/27/2019
+'''-------------------------------------------------------------------------------------
+AUTHORS			:	Brian Chung & Michael Cingari & Owen Salcido
+LAST MODIFIED	:	11/18/2019
+FILE            :   'identifier_transistions.py'
+-------------------------------------------------------------------------------------'''
 
 # The character '~' or tilde represents the end of a idenitifer or digit, it is used to jump to an end state
 

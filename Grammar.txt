@@ -1,0 +1,103 @@
+Production Rules:
+S -> A | D | I | L | W | B | Ms
+A -> ID = E
+E -> T E'
+E' -> + T E' | - T E' | EPSILON
+T -> F T'
+T' -> * F T' | / F T' | EPSILON
+F -> ( E ) | ID | INT | REAL
+D -> P ID Mi | EPSILON
+P -> int | float | bool
+Mi -> , ID Mi | EPSILON
+I -> if ( C ) { S }
+W -> while ( C ) { S }
+B -> begin S Ms end
+Ms -> ; S Ms | EPSILON
+C -> E C'
+C' -> R E | EPSILON
+R -> < | <= | == | != | >= | >
+
+Non-Terminal	First Set
+A		ID
+E'		+, -, ε
+T'		*, /, ε
+F		(, ID, INT, REAL
+D		ε, int, float, bool
+P		int, float, bool
+Mi		,, ε
+I		if
+L		else
+W		while
+B		begin
+Ms		;, ε
+C'		ε, <, <=, ==, !=, >=, >
+R		<, <=, ==, !=, >=, >
+S		ID, if, while, ;, ε, int, float, bool, begin, else
+T		(, ID, INT, REAL
+E		(, ID, INT, REAL
+C		(, ID, INT, REAL
+
+Non-Terminal	Follow Set
+S		$, ;, }, end
+A		$, ;, }, end
+E		<, <=, ==, !=, >=, >, ), $, ;, }, end
+E'		<, <=, ==, !=, >=, >, ), $, ;, }, end
+T		+, -, <, <=, ==, !=, >=, >, ), $, ;, }, end
+T'		+, -, <, <=, ==, !=, >=, >, ), $, ;, }, end
+F		*, /, +, -, <, <=, ==, !=, >=, >, ), $, ;, }, end
+D		$, ;, }, end
+P		ID
+Mi		$, ;, }, end
+I		$, ;, }, end
+L		$, ;, }, end
+W		$, ;, }, end
+B		$, ;, }, end
+Ms		end, $, ;, }
+C		)
+C'		)
+R		(, ID, INT, REAL
+
+Predict Set
+Rule #	Expression		Predict
+1	S → A			ID
+2	S → D			int, float, bool
+3	S → I			if
+4	S → L			else
+5	S → W			while
+6	S → B			begin
+7	S → Ms			;
+8	A → ID = E		ID
+9	E → T E'		(, ID, INT, REAL
+10	E' → + T E'		+
+11	E' → - T E'		-
+12	E' → ε			<, <=, ==, !=, >=, >, ), $, ;, }, end
+13	T → F T'		(, ID, INT, REAL
+14	T' → * F T'		*
+15	T' → / F T'		/
+16	T' → ε			+, -, <, <=, ==, !=, >=, >, ), $, ;, }, end
+17	F → ( E )		(
+18	F → ID			ID
+19	F → INT			INT
+20	F → REAL		REAL
+21	D → P ID Mi		int, float, bool
+22	D → ε			$, ;, }, end
+23	P → int			int
+24	P → float		float
+25	P → bool		bool
+26	Mi → , ID Mi		,
+27	Mi → ε			$, ;, }, end
+28	I → if ( C ) { S }	if
+29	L → else S		else
+30	W → while ( C ) { S }	while
+31	B → begin S Ms end	begin
+32	Ms → ; S Ms		;
+33	Ms → ε			end, }, $, ;
+34	C → E C'		(, ID, INT, REAL
+35	C' → R E		<, <=, ==, !=, >=, >
+36	C' → ε			)
+37	R → <			<
+38	R → <=			<=
+39	R → ==			==
+40	R → !=			!=
+41	R → >=			>=
+42	R → >			>
